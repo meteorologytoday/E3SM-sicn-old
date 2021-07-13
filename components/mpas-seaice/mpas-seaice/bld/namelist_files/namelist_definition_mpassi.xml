@@ -3407,7 +3407,7 @@ Default: Defined in namelist_defaults.xml
 </entry>
 
 
-<entry id="config_sicn_sit_target_file" type="char*1024"
+<entry id="config_sicn_input_file" type="char*1024"
 	category="sicn" group="sicn">
 Target file of sea ice thickness (SIT)
 Default: Defined in namelist_defaults.xml

@@ -1432,6 +1432,9 @@ contains
        call MPAS_pool_get_array(diagnostics, "meltOnset", meltOnset)
        call MPAS_pool_get_array(diagnostics, "freezeOnset", freezeOnset)
 
+
+        call mpas_log_write('[mpas_seaice_column] nCellsSolve = $i', intArgs=(/ nCellsSolve /))
+
        ! aerosols
        if (config_use_aerosols) then
 

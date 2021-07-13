@@ -3808,5 +3808,5 @@
 	</var_struct>
 
 #include "analysis_members/Registry_seaice_analysis_members.xml"
-#include "shared/Registry_sicn_mod.xml"
+#include "sicn_mod/Registry_sicn_mod.xml"
 </registry>

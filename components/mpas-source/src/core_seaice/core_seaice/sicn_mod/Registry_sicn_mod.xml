@@ -1,0 +1,38 @@
+	<nml_record name="sicn">
+
+		<nml_option name="config_sicn_active" type="logical" default_value="false" units="unitless"
+			description="If true, then seaice nudging module is active."
+			possible_values="true or false"
+		/>
+
+		<nml_option name="config_sicn_input_file" type="character" default_value="abc.nc" units="m"
+			description="Seaice nuding input file."
+		/>
+
+		<nml_option name="config_sicn_sit_timescale" type="real" default_value="3.5" units="day"
+			description="Seaice thickness nudging timescale."
+		/>
+
+		<nml_option name="config_sicn_start_time" type="character" default_value="2000-01-01_00:00:00" units="timestamp"
+			description="Forcing starting time"
+		/>
+
+		<nml_option name="config_sicn_cycle_start" type="character" default_value="2000-01-01_00:00:00" units="timestamp"
+			description="Forcing cycle starting time."
+		/>
+
+		<nml_option name="config_sicn_cycle_duration" type="character" default_value="1-00-00_00:00:00" units="timestamp"
+			description="Forcing cycle duration"
+		/>
+
+
+
+
+	</nml_record>
+
+    <!-- This is the pool (data blob) that ice model will see -->
+	<var_struct name="sicn_pool" time_levs="1">
+		<var name="sit_target" type="real" dimensions="nCells Time" name_in_code="sit_target" default_value="0.0"/>
+	</var_struct>
+
+

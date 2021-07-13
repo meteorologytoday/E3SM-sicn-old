@@ -517,9 +517,9 @@
 <config_AM_timeSeriesStatsCustom_backward_output_offset>'00-00-01_00:00:00'</config_AM_timeSeriesStatsCustom_backward_output_offset>
 
 <!-- seaice nudging section (Tien-Yiao Hsu. 2021/07/03) -->
-<config_sicn_active>false</config_sicn_active>
+<config_sicn_active>true</config_sicn_active>
 <config_sicn_sit_timescale>5.0</config_sicn_sit_timescale>
-<config_sicn_sit_target_file>abc.nc</config_sicn_sit_target_file>
+<config_sicn_input_file>abc.nc</config_sicn_input_file>
 <config_sicn_start_time>'2000-01-01_00:00:00'</config_sicn_start_time>
 <config_sicn_cycle_start>'2000-01-01_00:00:00'</config_sicn_cycle_start>
 <config_sicn_cycle_duration>'1-00-00_00:00:00'</config_sicn_cycle_duration>

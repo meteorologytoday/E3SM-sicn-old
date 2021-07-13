@@ -54,6 +54,10 @@ module ice_comp_mct
    use seaice_mesh, only: seaice_latlon_vector_rotation_backward
    use seaice_time_integration
 
+   ! TY modified begin: 2021/07/07
+   use sicn_mod
+   ! TY modified end
+
    use ice_constants_colpkg, only: &
        Tffresh
 
@@ -191,6 +195,11 @@ contains
 
     real(kind=RKIND), pointer :: &
          dayOfNextShortwaveCalculation ! needed for CESM like coupled simulations
+
+
+    ! TY modified begin: 2021/07/07
+    integer :: sicn_ierr
+    ! TY modified end
 
     interface
        subroutine xml_stream_parser(xmlname, mgr_p, comm, ierr) bind(c)
@@ -371,6 +380,12 @@ contains
     else
        call mpas_log_write('ice_comp_mct ERROR: infodata provided unknown starttype: ' // trim(starttype), MPAS_LOG_CRIT)
     end if
+   
+    ! TY modified begin: 2021/07/03     
+    call mpas_log_write('runtype: ')
+    call mpas_log_write(trim(runtype)
+    ! TY modified end
+
     if (runtype == "initial") then ! Start up run
 
         ! Turn off restart
@@ -518,6 +533,21 @@ contains
     if ( ierr /= 0 ) then
        call mpas_log_write('Core init failed for core ' // trim(domain % core % coreName), MPAS_LOG_CRIT)
     end if
+
+
+  ! TY : 2021/07/07
+  call mpas_log_write(' ')
+  call mpas_log_write(' *****************************************************************************')
+  call mpas_log_write(' Seaice nudging module initialization begins')
+
+  sicn_ierr = sicn_init(domain, timeStamp)
+  if ( sicn_ierr /= 0  ) then
+      call mpas_log_write('Seaice nudging module failed to initialize!!')
+      ierr = 1
+  end if
+
+  call mpas_log_write(' Seaice nudging module initialization finished')
+  call mpas_log_write(' *****************************************************************************')
 
 !-----------------------------------------------------------------------
 !
@@ -830,6 +860,11 @@ contains
         if (debugOn) call mpas_log_write('   Starting forward update', masterOnly=.true.)
         call mpas_timer_start("time integration", .false.)
         call seaice_timestep(domain, domain % clock, itimestep, ierr)
+
+        ! TY modified begin: 2021/07/07
+        call sicn_timestep(domain, domain % clock, itimestep, ierr)
+        ! TY modified end
+
         call mpas_timer_stop("time integration")
         if (debugOn) call mpas_log_write('   Finished forward update', masterOnly=.true.)
 

@@ -1082,7 +1082,7 @@ add_default($nl, 'config_AM_timeSeriesStatsCustom_backward_output_offset');
 ########################
 add_default($nl, 'config_sicn_active');
 add_default($nl, 'config_sicn_sit_timescale');
-add_default($nl, 'config_sicn_sit_target_file');
+add_default($nl, 'config_sicn_input_file');
 add_default($nl, 'config_sicn_start_time');
 add_default($nl, 'config_sicn_cycle_start');
 add_default($nl, 'config_sicn_cycle_duration');

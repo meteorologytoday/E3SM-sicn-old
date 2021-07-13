@@ -14,8 +14,6 @@ module seaice_core
    use mpas_threading
    use mpas_log, only: mpas_log_write
 
-   use sicn_mod
-
    private
    public :: &
         seaice_core_init, &
@@ -61,8 +59,6 @@ module seaice_core
       integer :: ierr
       integer :: numThreads
       
-      integer :: sicn_ierr
-
       call mpas_pool_set_error_level(MPAS_POOL_WARN)
 
       iErr = 0
@@ -138,20 +134,7 @@ module seaice_core
       call mpas_init_block(domain, dt)
 
 
-      ! TY : 2021/07/04
-      call mpas_log_write(' ')
-      call mpas_log_write(' *****************************************************************************')
-      call mpas_log_write(' Seaice nudging module initialization begins')
-
-      sicn_ierr = sicn_init(domain, startTimeStamp)
-      if ( sicn_ierr /= 0  ) then
-          call mpas_log_write('Seaice nudging module failed to initialize!!')
-          ierr = 1
-      end if
- 
-      call mpas_log_write(' Seaice nudging module initialization finished')
-      call mpas_log_write(' *****************************************************************************')
-      
+     
 
 
    end function seaice_core_init
@@ -305,6 +288,13 @@ module seaice_core
 
       logical, pointer :: config_write_output_on_startup
 
+      ! TY modified begin : 2021/07/05
+
+      call mpas_log_write('***** seaice_core_run is called *****')
+
+      ! TY modified end
+    
+
       iErr = 0
 
       ! configurations
@@ -417,8 +407,6 @@ module seaice_core
       use seaice_time_integration
       use seaice_error, only: seaice_check_critical_error
 
-   ! TY : 2021/07/03
-      use sicn_mod
 
       implicit none
 
@@ -430,11 +418,6 @@ module seaice_core
 
       ierr = 0
       call seaice_timestep(domain, clock, itimestep, ierr)
-
-      ! TY modified begin : 2021/07/03
-      call mpas_log_write('Ready to call sicn_timestep', flushNow=.true.)
-      call sicn_timestep(domain, clock, itimestep, ierr)
-      ! TY modified end
 
       call seaice_check_critical_error(domain, ierr)
 

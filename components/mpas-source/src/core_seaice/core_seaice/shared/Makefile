@@ -1,7 +1,6 @@
 .SUFFIXES: .F .o
 
-OBJS = 	sicn_mod.o \
-    mpas_seaice_time_integration.o \
+OBJS = 	mpas_seaice_time_integration.o \
 	mpas_seaice_advection_incremental_remap_tracers.o \
 	mpas_seaice_advection_incremental_remap.o \
 	mpas_seaice_advection_upwind.o \
@@ -27,8 +26,6 @@ OBJS = 	sicn_mod.o \
 	mpas_seaice_error.o
 
 all: $(OBJS)
-
-sicn_mod.o: mpas_seaice_time_integration.o
 
 mpas_seaice_constants.o: 
 
@@ -76,7 +73,7 @@ mpas_seaice_time_integration.o: mpas_seaice_constants.o mpas_seaice_velocity_sol
 
 mpas_seaice_initialize.o: mpas_seaice_constants.o mpas_seaice_mesh.o mpas_seaice_velocity_solver.o mpas_seaice_testing.o mpas_seaice_forcing.o mpas_seaice_advection.o mpas_seaice_column.o mpas_seaice_forcing.o
 
-mpas_seaice_core.o: mpas_seaice_constants.o mpas_seaice_time_integration.o mpas_seaice_velocity_solver.o mpas_seaice_forcing.o mpas_seaice_initialize.o mpas_seaice_column.o sicn_mod.o
+mpas_seaice_core.o: mpas_seaice_constants.o mpas_seaice_time_integration.o mpas_seaice_velocity_solver.o mpas_seaice_forcing.o mpas_seaice_initialize.o mpas_seaice_column.o
 
 mpas_seaice_core_interface.o: mpas_seaice_core.o
 

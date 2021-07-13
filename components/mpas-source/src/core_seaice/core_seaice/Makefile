@@ -1,10 +1,18 @@
 .SUFFIXES: .F .o
 .PHONY: model_forward analysis_members shared
 
+# TY Modified begin: 2021/07/07
+.PHONY: sicn_mod
+# TY Modified end
+
 all: core_seaice
 
-core_seaice: column_package shared analysis_members model_forward
+
+# TY Modified begin: 2021/07/07
+#core_seaice: column_package shared analysis_members model_forward
+core_seaice: column_package shared analysis_members model_forward sicn_mod
 	ar -ru libdycore.a `find . -type f -name "*.o"`
+# TY Modified end
 
 gen_includes:
 	$(CPP) $(CPPFLAGS) $(CPPINCLUDES) Registry.xml > Registry_processed.xml
@@ -32,6 +40,11 @@ analysis_members: column_package shared
 
 model_forward: column_package shared analysis_members
 	(cd model_forward; $(MAKE))
+
+# TY Modified begin: 2021/07/07
+sicn_mod: 
+	(cd sicn_mod; $(MAKE))
+# TY Modified end
 
 clean:
 	$(RM) *.o *.mod *.f90 libdycore.a
