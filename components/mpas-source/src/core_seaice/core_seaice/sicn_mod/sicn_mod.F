@@ -247,7 +247,12 @@ contains
 
         type (block_type), pointer :: block
 
-        type (mpas_pool_type), pointer :: mesh_pool, sicn_pool, tracers_pool, atmos_coupling
+        type (mpas_pool_type), pointer :: &
+            mesh_pool, &
+            sicn_pool, &
+            tracers_pool, &
+            tracers_agg_pool, &
+            atmos_coupling
         logical, pointer :: config_do_restart
 
         real(kind=RKIND), dimension(:), pointer :: &
@@ -257,14 +262,14 @@ contains
             areaCell
 
         real(kind=RKIND), dimension(:,:,:), pointer :: iceVolumeCategory
-        real(kind=RKIND), dimension(:), pointer :: airTemperature
+        real(kind=RKIND), dimension(:), pointer :: airTemperature, iceVolumeCell
 
 
         integer, pointer :: nCells, nCellsSolve, nCategories
 
 
         integer :: iCell, iCat
-        real(kind=RKIND) :: total_ice_volume, tmp, tmp2
+        real(kind=RKIND) :: total_iceVolumeCat, total_iceVolumeCell, tmp, tmp2
         
         integer :: i, j, k
         
@@ -275,6 +280,7 @@ contains
         call mpas_log_write('Getting block structs')
         call MPAS_pool_get_subpool(block % structs, "mesh", mesh_pool)
         call MPAS_pool_get_subpool(block % structs, "tracers", tracers_pool)
+        call MPAS_pool_get_subpool(block % structs, "tracers_aggregate", tracers_agg_pool)
         call MPAS_pool_get_subpool(block % structs, "sicn_pool", sicn_pool)
         call MPAS_pool_get_subpool(block % structs, "atmos_coupling", atmos_coupling)
 
@@ -288,8 +294,8 @@ contains
         call MPAS_pool_get_array(mesh_pool, "latCell",  latCell)
         call MPAS_pool_get_array(mesh_pool, "lonCell",  lonCell)
         call MPAS_pool_get_array(mesh_pool, "areaCell", areaCell)
-        !call MPAS_pool_get_array(tracers_pool, "iceVolumeCategory", iceVolumeCategory, 1) ! ONE nCategories nCells Time
-        call MPAS_pool_get_array(tracers_pool, "surfaceTemperature", iceVolumeCategory, 1) ! ONE nCategories nCells Time
+        call MPAS_pool_get_array(tracers_pool, "iceVolumeCategory", iceVolumeCategory, 1) ! ONE nCategories nCells Time
+        call MPAS_pool_get_array(tracers_agg_pool, "iceVolumeCell", iceVolumeCell, 1) ! ONE nCategories nCells Time
         call MPAS_pool_get_array(sicn_pool, "sit_target", sit_target)
 
         call mpas_log_write('Dimensions retrieved: nCells = $i , nCellsSolve = $i , nCategories = $i', intArgs=(/ nCells, nCellsSolve, nCategories /))
@@ -305,17 +311,21 @@ contains
 
         tmp = 0.0
         tmp2 = 0.0
-        total_ice_volume = 0.0
+        total_iceVolumeCat  = 0.0
+        total_iceVolumeCell = 0.0
         do iCell = 1, nCellsSolve
 
             do iCat = 1, nCategories
-                total_ice_volume = total_ice_volume + iceVolumeCategory(1, iCat, iCell) 
+                total_iceVolumeCat = total_iceVolumeCat + iceVolumeCategory(1, iCat, iCell) 
             enddo
             tmp = tmp + sit_target(iCell)
             tmp2 = tmp2 + airTemperature(iCell)
+            total_iceVolumeCell = total_iceVolumeCell + iceVolumeCell(iCell)
         enddo
 
-        call mpas_log_write('sum of sit_target = $r ; total ice volume = $r', realArgs=(/tmp, total_ice_volume/)) 
+        call mpas_log_write('sum of sit_target = $r ; total ice volume = $r', realArgs=(/tmp, total_iceVolumeCat/)) 
+        call mpas_log_write('total_iceVolumeCat = $r', realArgs=(/total_iceVolumeCat/)) 
+        call mpas_log_write('total_iceVolumeCell = $r', realArgs=(/total_iceVolumeCell/)) 
         call mpas_log_write('sum of airTemperature = $r', realArgs=(/tmp2/)) 
         
         call mpas_log_write('Leave sicn_impose_forcing')
