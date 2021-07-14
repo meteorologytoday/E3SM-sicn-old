@@ -13,7 +13,7 @@
 module mpas_forcing
 
 #define COMMA ,
-#define FORCING_DEBUG_WRITE(M) !call mpas_log_write( M )
+#define FORCING_DEBUG_WRITE(M) call mpas_log_write( M )
 #define FORCING_WARNING_WRITE(M) call mpas_log_write( M , messageType=MPAS_LOG_WARN)
 #define FORCING_ERROR_WRITE(M) call mpas_log_write( M , messageType=MPAS_LOG_ERR)
 
@@ -127,32 +127,48 @@ contains
        forcingGroupNew => forcingGroupNew % next
        nullify(forcingGroupNew % next)
     endif
+    
+    FORCING_DEBUG_WRITE('set forcing name')
 
     ! set the forcings name
     forcingGroupNew % forcingGroupName = trim(forcingGroupName)
 
+    FORCING_DEBUG_WRITE('set domain')
     ! set the forcing group domain
     forcingGroupNew % domain_ptr => domain
 
+    FORCING_DEBUG_WRITE('add group to restart counter')
     ! add forcing group to restart counter
     call add_forcing_group_to_restart_counter(forcingGroupNew)
 
+
+    FORCING_DEBUG_WRITE('Create forcing clock')
+    FORCING_DEBUG_WRITE('set time interval')
     ! create the forcing clock
     call mpas_set_timeInterval(timeStep, dt=0.0_RKIND)
+    FORCING_DEBUG_WRITE('set stop time')
     call mpas_set_time(stopTime, dateTimeString="9999-12-31_23:59:59") ! shouldnt need to do this!
     if (restart) then
+        FORCING_DEBUG_WRITE('restart run')
+        FORCING_DEBUG_WRITE('Retrieve forcing clock')
+        
        call get_restart_times(forcingGroupNew, timeStep, stopTime)
     else
+        FORCING_DEBUG_WRITE('not restart run')
+        FORCING_DEBUG_WRITE('set start time with ' // trim(startTimeStr))
        call mpas_set_time(startTime, dateTimeString=startTimeStr)
+        FORCING_DEBUG_WRITE('create clock')
        call mpas_create_clock(forcingGroupNew % forcingClock, startTime=startTime, timeStep=timeStep, stopTime=stopTime)
     endif
 
+    FORCING_DEBUG_WRITE('if we will cycle the forcing clock')
     ! determine if we will cycle the forcing clock
     forcingGroupNew % forcingCycleUse = .true.
     if (trim(forcingCycleStart) == "none") then
        forcingGroupNew % forcingCycleUse = .false.
     endif
 
+    FORCING_DEBUG_WRITE('set forcing clock cycling')
     ! set forcing clock cycling
     if (forcingGroupNew % forcingCycleUse) then
 
@@ -177,6 +193,7 @@ contains
           forcingGroupNew % forcingCycleStartInclusive = forcingCycleStartInclusive
        endif
 
+        FORCING_DEBUG_WRITE('set forcing cycle alarm')
        ! set the forcing cycle alarm
        call mpas_add_clock_alarm(&
             forcingGroupNew % forcingClock, forcingGroupNew % forcingCycleAlarmID, forcingGroupNew % forcingCycleEnd)
@@ -355,6 +372,7 @@ contains
                variable_interval_forward, &
                variable_interval_backward)
 
+          FORCING_DEBUG_WRITE('-- Forcing: mpas_forcing_init_forcing add field to forcing stream. poolname = '//trim(poolname))
           call add_forcing_field_to_forcing_stream(&
                forcingStreamNew, &
                forcingGroup % domain_ptr, &
@@ -706,12 +724,18 @@ contains
     forcingFieldNew % poolname  = trim(poolname)
     forcingFieldNew % fieldname = trim(fieldname)
 
+    FORCING_DEBUG_WRITE('-- Forcing: add_forcing_field_to_forcing_stream: forcingName = ' // trim(forcingName))
+    FORCING_DEBUG_WRITE('-- Forcing: add_forcing_field_to_forcing_stream: poolname    = ' // trim(poolname))
+    FORCING_DEBUG_WRITE('-- Forcing: add_forcing_field_to_forcing_stream: fieldname   = ' // trim(fieldname))
+
     ! set up the input fields
-    call setup_input_fields(&
-         forcingFieldNew, &
-         forcingStream, &
-         streamManager, &
+    call setup_input_fields( &
+         forcingFieldNew,    &
+         forcingStream,      &
+         streamManager,      &
          domain)
+    
+    FORCING_DEBUG_WRITE('-- Forcing: add_forcing_field_to_forcing_stream: leaving')
 
   end subroutine add_forcing_field_to_forcing_stream!}}}
 
@@ -1774,9 +1798,14 @@ contains
     logical :: &
          lInputPoolCreated
 
+
+    call mpas_log_write('Entering setup_input_fields')
     ! get the input field and pool name
     fieldnameInput = trim(forcingField % fieldname)//"_forcing_input"
     poolnameInput  = trim(forcingField % poolname)//"_forcing_input"
+    
+    call mpas_log_write('setup_input_fields: fieldnameInput = ' // trim(fieldnameInput))
+    call mpas_log_write('setup_input_fields: poolnameInput  = ' // trim(poolnameInput))
 
     ! remove the ouput field to the stream
     call MPAS_stream_mgr_set_property(&
@@ -1789,6 +1818,8 @@ contains
     if (ierr /= 0) then
        call mpas_log_write('Forcing: setup_input_fields: MPAS_stream_mgr_remove_field: $i', MPAS_LOG_CRIT, intArgs=(/ierr/))
     endif
+
+    call mpas_log_write('setup_input_fields: right before the block loop')
 
     ! loop over blocks
     block => domain % blocklist
@@ -1806,17 +1837,22 @@ contains
        ! create the new input forcing pool if needed
        lInputPoolCreated = .false.
 
+       call mpas_log_write('See if we can get forcing pool name: ' // (poolnameInput))
        nullify(forcingPoolInput)
        call MPAS_pool_get_subpool(block % structs, trim(poolnameInput), forcingPoolInput)
        if (.not. associated(forcingPoolInput)) then
+          call MPAS_log_write('A new forcingPool created')
           call MPAS_pool_create_pool(forcingPoolInput)
           lInputPoolCreated = .true.
        endif
 
+       call mpas_log_write('Forcing: setup_input_fields: forcingPoolInfo % nDims = $i', intArgs=(/ forcingPoolInfo % nDims /) )
+       call mpas_log_write('Forcing: setup_input_fields: forcingPoolInfo % fieldType = $i', intArgs=(/ forcingPoolInfo % fieldType /))
        if (forcingPoolInfo % fieldType == MPAS_POOL_REAL) then
 
           select case (forcingPoolInfo % nDims)
           case (0)
+
 
              ! get the output field
              call MPAS_pool_get_field(forcingPoolOutput, trim(forcingField % fieldname), field0DRealOutput, 1)
@@ -1847,12 +1883,19 @@ contains
 
           case (1)
 
+             call mpas_log_write('In case(1)')
+
              ! get the output field
              call MPAS_pool_get_field(forcingPoolOutput, trim(forcingField % fieldname), field1DRealOutput, 1)
              ! allocate the time levels for the input field
              allocate(field1DRealArray(forcingStream % nTimeStencil))
              ! loop over the desired time levels
+
+             call mpas_log_write('poolnameInput  = ' // trim(poolnameInput))
+             call mpas_log_write('fieldnameInput = ' // trim(fieldnameInput))
+
              do iTime = 1, forcingStream % nTimeStencil
+                call mpas_log_write('iTime : %i', intArgs=(/ iTime /))
                 ! get temporary copy of output field
                 call MPAS_duplicate_field(field1DRealOutput, field1DRealInput)
                 ! set the input time level field to the temporary field
@@ -1861,7 +1904,11 @@ contains
                 nullify(field1DRealArray(iTime) % next)
                 nullify(field1DRealArray(iTime) % prev)
                 ! if we have a previous block link the fields in the blocks
+                call mpas_log_write('Test associated(block % prev)')
                 if (associated(block % prev)) then
+
+                   call mpas_log_write('It is associated.')
+                   call mpas_log_write('Now get subpool and field.')
                    ! get the input field from the previous block
                    call mpas_pool_get_subpool(block % prev % structs, poolnameInput, forcingPoolInputPrev)
                    call mpas_pool_get_field(forcingPoolInputPrev, fieldnameInput, field1DRealInputPrev, iTime)
@@ -1871,6 +1918,7 @@ contains
                 endif
              enddo ! iTime
              ! add the input field to the pools
+             call mpas_log_write('Adding field with its name = ' // trim(fieldnameInput))
              call MPAS_pool_add_field(forcingPoolInput, fieldnameInput, field1DRealArray)
              call MPAS_pool_add_field(block % allFields, fieldnameInput, field1DRealArray)
 
@@ -2130,6 +2178,8 @@ contains
 
        block => block % next
     enddo ! blocklist
+       
+    call mpas_log_write('Forcing: setup_input_fields: Here')
 
     ! add the input field to the stream
     call MPAS_stream_mgr_add_field(&
@@ -2142,6 +2192,8 @@ contains
     if (ierr /= 0) then
        call mpas_log_write('Forcing: setup_input_fields: MPAS_stream_mgr_set_property: $i', MPAS_LOG_CRIT, intArgs=(/ierr/))
     endif
+    
+    call mpas_log_write('Forcing: setup_input_fields: leaving')
 
   end subroutine setup_input_fields!}}}
 
@@ -2664,25 +2716,34 @@ contains
          forcingGroupNames, &
          forcingGroupRestartTimes
 
+    call mpas_log_write('Enter get_restart_times')
+
+    call mpas_log_write('Getting forcing pool')
     call mpas_pool_get_subpool(forcingGroup % domain_ptr % blocklist % structs, "forcing", forcingPool)
 
+    call mpas_log_write('Getting array: forcingGroupNames')
     call MPAS_pool_get_array(forcingPool, "forcingGroupNames",        forcingGroupNames)
+    call mpas_log_write('Getting array: forcingGroupRestartTimes')
     call MPAS_pool_get_array(forcingPool, "forcingGroupRestartTimes", forcingGroupRestartTimes)
 
+    call mpas_log_write('Getting dimension: nForcingGroupsMax')
     call mpas_pool_get_dimension(forcingGroup % domain_ptr % blocklist % dimensions, "nForcingGroupsMax", nForcingGroupsMax)
 
     do iForcingGroup = 1, nForcingGroupsMax
-
+        call mpas_log_write('Group $i / $i :', intArgs=(/ iForcingGroup, nForcingGroupsMax /))
+        call mpas_log_write(trim(forcingGroup % forcingGroupName))
        if (trim(forcingGroup % forcingGroupName) == trim(forcingGroupNames(iForcingGroup)(1:ShortStrKind))) then
 
+            call mpas_log_write('set the forcing group time')
           ! set the forcing group time
           call MPAS_set_time(forcingClockTime, dateTimeString=trim(forcingGroupRestartTimes(iForcingGroup)(1:ShortStrKind)))
+            call mpas_log_write('create clock')
           call mpas_create_clock(forcingGroup % forcingClock, startTime=forcingClockTime, timeStep=timeStep, stopTime=stopTime)
 
        endif
 
     enddo ! iForcingGroup
-
+    call mpas_log_write('leave get_restart_times')
   end subroutine get_restart_times!}}}
 
 !-----------------------------------------------------------------------

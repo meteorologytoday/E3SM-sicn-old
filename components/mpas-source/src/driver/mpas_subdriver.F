@@ -328,6 +328,10 @@ module mpas_subdriver
       !
       ! Initialize core
       !
+      ! TY modified begin : 2021/07/05
+      call mpas_log_write('Ready to call core_init of component: '//trim(domain_ptr % core % coreName), flushNow=.true.)
+      ! TY modified end
+
       iErr = domain_ptr % core % core_init(domain_ptr, timeStamp)
       if ( ierr /= 0 ) then
          call mpas_log_write('Core init failed for core '//trim(domain_ptr % core % coreName), messageType=MPAS_LOG_CRIT)
@@ -343,6 +347,10 @@ module mpas_subdriver
       implicit none
 
       integer :: iErr
+
+      ! TY modified begin : 2021/07/05
+      call mpas_log_write('Ready to call core_run of component: '//trim(domain_ptr % core % coreName), flushNow=.true.)
+      ! TY modified end
 
       iErr = domain_ptr % core % core_run(domain_ptr)
       if ( iErr /= 0 ) then
