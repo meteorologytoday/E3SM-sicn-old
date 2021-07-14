@@ -13,6 +13,8 @@ for target_dir in "${target_dirs[@]}"; do
 
     src_dir=$E3SM_REFROOT/${target_dir}
     dst_dir=$cwd/${target_dir}
+
+    rm -rf $dst_dir
     mkdir -p $dst_dir
     cp -r $src_dir $dst_dir
 
